@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Characters.Base
 {
     /// <summary>
-    /// Abstract class to handle character movement. 
+    /// Abstract class to handle agent movement. 
     /// </summary>
     [RequireComponent(typeof(Rigidbody2D))]
     public class AgentMovement : MonoBehaviour
@@ -38,6 +38,7 @@ namespace Characters.Base
                 if (_targetNode != null && _targetNode.Equals(value))
                     return;
 
+                // Check if target node is 
                 if (_targetNode != null)
                     _targetChanged = true;
 
@@ -46,12 +47,16 @@ namespace Characters.Base
             }
         }
 
+        /// <summary>
+        /// Property to check if agent has a target.
+        /// </summary>
         public bool HasTarget => TargetNode != null;
 
         /// <summary>
         /// Stack to store the current path.
         /// </summary>
         private Stack<Node> _currentPath;
+
         /// <summary>
         /// Property Stack to store the current path of the character.
         /// </summary>
@@ -109,38 +114,58 @@ namespace Characters.Base
 
         private void Update()
         {
+            // Check if target node is null, if it is then return.
             if (TargetNode == null) return;
+            // Check if current node is equal to target node
             if (_currentNode.Equals(TargetNode))
             {
+                // if it is then set target node to null.
                 TargetNode = null;
+                CurrentPath = null;
                 return;
             }
 
+            // Assign a path if there is none.
             CurrentPath ??= GroundSystem.Instance.GetPath(_currentNode, TargetNode);
+            // If there is no next node,
             if (_nextNode == null)
             {
+                // Try to get next node,
                 if (!CurrentPath.TryPop(out _nextNode))
                 {
+                    // If there is error to get the node then set current path to null.
                     CurrentPath = null;
                     return;
                 }
 
+                // Look at the target.
                 LookAtTarget(_nextNode.WorldPos);
             }
 
+            // Lerp agent to the next node.
             transform.position = Vector2.Lerp(_currentNode.WorldPos, _nextNode.WorldPos, _deltaTime / timeBetweenNodes);
             _deltaTime += Time.deltaTime;
 
+            // If agent didn't reached the target return. 
             if (Vector2.Distance(transform.position, _nextNode.WorldPos) > 0.01f) return;
 
+            // If reached,
+            // Set the position to next node's position.
             transform.position = _nextNode.WorldPos;
+            // Set next node as current node. 
             _currentNode = _nextNode;
+            // Reset time.
             _deltaTime = 0f;
+            // Set next node to null.
             _nextNode = null;
 
+            // Check if target changed, if not then return.
             if (!_targetChanged) return;
 
+            // If target changed,
+            // Set current path as null
             CurrentPath = null;
+            // Set target changed flag to false.
             _targetChanged = false;
         }
 
@@ -158,7 +183,7 @@ namespace Characters.Base
 #if UNITY_EDITOR
         private void OnDrawGizmos()
         {
-            if(isPlayer)
+            if (isPlayer)
                 DrawGizmos();
         }
 
@@ -169,7 +194,7 @@ namespace Characters.Base
 
         private void DrawGizmos()
         {
-            if(!Application.isPlaying) return;
+            if (!Application.isPlaying) return;
 
             // Check if the path is valid.
             if (_currentPathArray is { Length: > 0 })

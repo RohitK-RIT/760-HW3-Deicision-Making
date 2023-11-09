@@ -6,6 +6,10 @@ namespace Characters.Enemy
 {
     public class Enemy : Agent<EnemyStates, EnemyStateMachine, Enemy>
     {
+        /// <summary>
+        /// Function to check if player is in range.
+        /// </summary>
+        /// <returns>if player is in range</returns>
         public override bool HasEnemyInRange()
         {
             return GameManager.Instance.Player &&
